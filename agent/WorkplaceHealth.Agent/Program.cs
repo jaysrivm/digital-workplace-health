@@ -1,40 +1,15 @@
-﻿using System.Text.Json;
-using WorkplaceHealth.Agent.Collectors;
-using WorkplaceHealth.Agent.Models;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
-var cpuCollector = new CpuCollector();
-var memoryCollector = new MemoryCollector();
-var diskCollector = new DiskCollector();
-var windowsUpdateCollector = new WindowsUpdateCollector();
-var serviceCollector = new ServiceCollector();
-var registryCollector = new RegistryCollector();
+var builder = Host.CreateApplicationBuilder(args);
 
-var healthReport = new HealthReport
+builder.Services.AddWindowsService(options =>
 {
-    DeviceName = Environment.MachineName,
+    options.ServiceName = "WorkplaceHealth Agent";
+});
 
-    CollectedAtUtc = DateTime.UtcNow,
+builder.Services.AddHostedService<WorkplaceHealth.Agent.HealthReportWorker>();
 
-    Cpu = cpuCollector.GetInfo(),
+var host = builder.Build();
 
-    Memory = memoryCollector.GetInfo(),
-
-    Disks = diskCollector.GetInfo(),
-
-    WindowsUpdate = windowsUpdateCollector.GetStatus(),
-
-    Services = serviceCollector.GetImportantServices(),
-
-    Registry = registryCollector.GetStatus()
-};
-
-var jsonOptions = new JsonSerializerOptions
-{
-    WriteIndented = true
-};
-
-string json = JsonSerializer.Serialize(
-    healthReport,
-    jsonOptions);
-
-Console.WriteLine(json);
+host.Run();
