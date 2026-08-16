@@ -18,3 +18,6 @@ dist/
 Thumbs.db
 # Published application output
 publish/
+
+# Local SQLite database
+*.db
