@@ -1,15 +1,33 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var builder = Host.CreateApplicationBuilder(args);
+namespace WorkplaceHealth.Agent;
 
-builder.Services.AddWindowsService(options =>
+public class Program
 {
-    options.ServiceName = "WorkplaceHealth Agent";
-});
+    public static void Main(string[] args)
+    {
+        var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddHostedService<WorkplaceHealth.Agent.HealthReportWorker>();
+        builder.Configuration
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile(
+                "appsettings.json",
+                optional: false,
+                reloadOnChange: true);
 
-var host = builder.Build();
+        builder.Services.AddWindowsService(options =>
+        {
+            options.ServiceName = "Workplace Health Agent";
+        });
 
-host.Run();
+        builder.Services.AddHttpClient();
+
+        builder.Services.AddHostedService<HealthReportWorker>();
+
+        var host = builder.Build();
+
+        host.Run();
+    }
+}
